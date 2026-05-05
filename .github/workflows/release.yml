@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+          
+      - name: Install dependencies
+        run: bun install
+        
+      - name: Compile binaries
+        run: |
+          mkdir -p dist
+          bun build --compile --target=bun-darwin-x64 src/cli.ts --outfile dist/wutp-darwin-x64
+          bun build --compile --target=bun-darwin-arm64 src/cli.ts --outfile dist/wutp-darwin-arm64
+          bun build --compile --target=bun-linux-x64 src/cli.ts --outfile dist/wutp-linux-x64
+          bun build --compile --target=bun-linux-arm64 src/cli.ts --outfile dist/wutp-linux-arm64
+          
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/wutp-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
